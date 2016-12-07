@@ -7,9 +7,9 @@ var siftscience = require('../lib/app.js')({
   api_key:       config.api_key,
   account_id:    config.account_id,
   partner_id:    config.account_id,
-  custom_events: ['custom_event_1', 'custom_event_2'],
+  custom_events: ['custom_event_1', 'custom_event_2','create_custom_order'],
   // return_action: true,
-  return_score: true,
+  // return_score: true,
   return_workflow_status: true,
   abuse_types: ['payment_abuse', 'promo_abuse'],
   webhooks: {
@@ -39,6 +39,8 @@ function init() {
   create_account()
     .then(update_account)
     .then(login)
+    .then(create_order)
+    .then(create_custom_order)
     .then(custom_event_1)
     .then(label)
     .then(score)
@@ -104,6 +106,136 @@ function login() {
   });
 }
 
+function create_order() {
+  return siftscience.event.create_order(// Sample $create_order event
+    {
+      // Required Fields
+      "$user_id"          : user_id,
+      // Supported Fields
+      "$session_id"       : session_id,
+      "$order_id"         : "ORDER-28168441",
+      "$user_email"       : "bill@gmail.com",
+      "$amount"           : 115940000, // $115.94
+      "$currency_code"    : "USD",
+      "$billing_address"  : {
+        "$name"         : "Bill Jones",
+        "$phone"        : "1-415-555-6041",
+        "$address_1"    : "2100 Main Street",
+        "$address_2"    : "Apt 3B",
+        "$city"         : "New London",
+        "$region"       : "New Hampshire",
+        "$country"      : "US",
+        "$zipcode"      : "03257"
+      },
+      "$payment_methods"  : [
+        {
+          "$payment_type"    : "$credit_card",
+          "$payment_gateway" : "$braintree",
+          "$card_bin"        : "542486",
+          "$card_last4"      : "4444"
+        }
+      ],
+      "$shipping_address"  : {
+        "$name"          : "Bill Jones",
+        "$phone"         : "1-415-555-6041",
+        "$address_1"     : "2100 Main Street",
+        "$address_2"     : "Apt 3B",
+        "$city"          : "New London",
+        "$region"        : "New Hampshire",
+        "$country"       : "US",
+        "$zipcode"       : "03257"
+      },
+      "$expedited_shipping" : true,
+      "$shipping_method"    : "$electronic",
+      "$items"             : [
+        {
+          "$item_id"        : "12344321",
+          "$product_title"  : "Microwavable Kettle Corn: Original Flavor",
+          "$price"          : 4990000, // $4.99
+          "$upc"            : "097564307560",
+          "$sku"            : "03586005",
+          "$brand"          : "Peters Kettle Corn",
+          "$manufacturer"   : "Peters Kettle Corn",
+          "$category"       : "Food and Grocery",
+          "$tags"           : ["Popcorn", "Snacks", "On Sale"],
+          "$quantity"       : 4
+        },
+        {
+          "$item_id"        : "B004834GQO",
+          "$product_title"  : "The Slanket Blanket-Texas Tea",
+          "$price"          : 39990000, // $39.99
+          "$upc"            : "67862114510011",
+          "$sku"            : "004834GQ",
+          "$brand"          : "Slanket",
+          "$manufacturer"   : "Slanket",
+          "$category"       : "Blankets & Throws",
+          "$tags"           : ["Awesome", "Wintertime specials"],
+          "$color"          : "Texas Tea",
+          "$quantity"       : 2
+        }
+      ],
+
+      // For marketplaces, use $seller_user_id to identify the seller
+      "$seller_user_id"     : "slinkys_emporium",
+
+      "$promotions"         : [
+        {
+          "$promotion_id" : "FirstTimeBuyer",
+          "$status"       : "$success",
+          "$description"  : "$5 off",
+          "$discount"     : {
+            "$amount"                   : 5000000,  // $5.00
+            "$currency_code"            : "USD",
+            "$minimum_purchase_amount"  : 25000000  // $25.00
+          }
+        }
+      ],
+
+      // Sample Custom Fields
+      "digital_wallet"      : "apple_pay", // "google_wallet", etc. 
+      "coupon_code"         : "dollarMadness",
+      "shipping_choice"     : "FedEx Ground Courier",
+      "is_first_time_buyer" : false
+    }
+  )
+  .then(function(response) {
+    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+  })
+  .catch(function(err) {
+    console.log('CREATE_ORDER ERROR: ', err, '\n');
+    throw err;
+  });
+}function create_custom_order() {
+  return siftscience.event.create_custom_order(// Sample $create_order event
+    {
+      // Required Fields
+      "$user_id"          : user_id,
+      // Supported Fields
+      "$session_id"       : session_id,
+      "$order_id"         : "ORDER-28168442" + Date.now(),
+      "$user_email"       : "bill@gmail.com",
+      "$amount"           : 115940000, // $115.94
+      "$currency_code"    : "USD",
+      "$payment_type"     : "$crypto_currency",
+      "$shipping_method"    : "$physical",
+      // For marketplaces, use $seller_user_id to identify the seller
+      "$seller_user_id"     : "slinkys_emporium",
+    }
+  )
+  .then(function(response) {
+    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+  })
+  .catch(function(err) {
+    console.log('CREATE_ORDER ERROR: ', err, '\n');
+    throw err;
+  });
+}
+// {
+//
+//   '$session_id':   session_id,
+//   '$user_id':      user_id,
+//   '$login_status': siftscience.CONSTANTS.STATUS.SUCCESS
+// }
 function custom_event_1() {
   return siftscience.event.custom_event_1({
     '$session_id': session_id,
