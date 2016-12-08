@@ -37,20 +37,21 @@ var session_id = '1',
 
 function init() {
   create_account()
-    .then(update_account)
-    .then(login)
-    .then(create_order)
-    .then(create_custom_order)
-    .then(custom_event_1)
-    .then(label)
-    .then(score)
-    .then(fingerprint_get_devices)
-    .then(fingerprint_get_session)
-    .then(fingerprint_get_device)
-    .then(fingerprint_label_device)
-    .then(partner_create_account)
-    .then(partner_list_accounts)
-    .then(partner_configure_notifications)
+    // .then(update_account)
+    // .then(login)
+    .then(update_content)
+    // .then(create_order)
+    // .then(create_custom_order)
+    // .then(custom_event_1)
+    // .then(label)
+    // .then(score)
+    // .then(fingerprint_get_devices)
+    // .then(fingerprint_get_session)
+    // .then(fingerprint_get_device)
+    // .then(fingerprint_label_device)
+    // .then(partner_create_account)
+    // .then(partner_list_accounts)
+    // .then(partner_configure_notifications)
     .then(start_test_server)
   ;
 }
@@ -89,6 +90,51 @@ function update_account() {
     console.log('UPDATE ACCOUNT ERROR: ', err, '\n');
     throw err;
   });
+}
+
+function update_content() {
+  return siftscience.event.update_content({
+      // Required Fields
+      "$user_id"    : user_id,
+
+      // Supported Fields
+      "$contact_email"    : "bill@example.com",
+      "$contact_phone"    : "1-415-555-6040",
+      "$content_id"       : "9671500641",
+      "$subject"          : "2 Bedroom Apartment for Rent",
+      "$content"          : "Capitol Hill Seattle brand new condo. 2 bedrooms and 1 full bath.",
+      "$amount"           : 2300000000, // $2300
+      "$currency_code"    : "USD",
+      "$categories"       : [
+        "Housing",
+        "Apartments",
+        "2 Bedrooms"
+      ],
+
+    "$locations"        : [
+        {
+          "$city"       : "Seattle",
+          "$region"     : "Washington",
+          "$country"    : "US",
+          "$zipcode"    : "98112"
+        }
+      ],
+      "$image_hashes"     : [
+        "912ec803b2ce49e4a541068d495ab570", // MD5 hash of the image
+        "4be4b314caafaa3e12bfcb8d16df3aff"
+      ],
+      "$expiration_time"  : 1471003200000, // UNIX timestamp in milliseconds
+      "$status"           : "$active"
+    }
+  )
+  .then(function(response) {
+    console.log('UPDATE CONTENT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+  })
+  .catch(function(err) {
+    console.log('UPDATE CONTENT ERROR: ', err, '\n');
+    throw err;
+  });
+
 }
 
 function login() {
