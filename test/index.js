@@ -1,3 +1,5 @@
+'use strict'; //jshint -W097
+
 var config      = require('./config.js');
 var express     = require('express');
 var bodyParser  = require('body-parser');
@@ -9,8 +11,8 @@ var siftscience = require('../lib/app.js')({
   partner_id:    config.account_id,
   custom_events: ['custom_event_1', 'custom_event_2','create_custom_order'],
   // return_action: true,
-  // return_score: true,
-  return_workflow_status: true,
+  return_score: true,
+  // return_workflow_status: true,
   abuse_types: ['payment_abuse', 'promo_abuse'],
   webhooks: {
     all: function(req, res, done) {
@@ -32,28 +34,38 @@ var siftscience = require('../lib/app.js')({
 // Run a bunch of test requests
 //
 
-var session_id = '1',
-    user_id    = '1';
+var session_id = 'SESSION-' + Date.now(),
+    user_id    = 'USER-' + Date.now();
+var order_id = 'ORDER-' + Date.now();
+
+// function init() {
+//   create_account()
+//     // .then(update_account)
+//     // .then(login)
+//     // .then(update_content)
+//     .then(create_order)
+//     // .then(create_custom_order)
+//     // .then(custom_event_1)
+//     // .then(label)
+//     // .then(score)
+//     // .then(fingerprint_get_devices)
+//     // .then(fingerprint_get_session)
+//     // .then(fingerprint_get_device)
+//     // .then(fingerprint_label_device)
+//     // .then(partner_create_account)
+//     // .then(partner_list_accounts)
+//     // .then(partner_configure_notifications)
+//     .then(start_test_server)
+//   ;
+// }
 
 function init() {
   create_account()
-    // .then(update_account)
-    // .then(login)
-    .then(update_content)
-    // .then(create_order)
-    // .then(create_custom_order)
-    // .then(custom_event_1)
-    // .then(label)
-    // .then(score)
-    // .then(fingerprint_get_devices)
-    // .then(fingerprint_get_session)
-    // .then(fingerprint_get_device)
-    // .then(fingerprint_label_device)
-    // .then(partner_create_account)
-    // .then(partner_list_accounts)
-    // .then(partner_configure_notifications)
-    .then(start_test_server)
-  ;
+    .then (create_order)
+    .delay(5000)
+    .then(order_decisions)
+    .then(start_test_server);
+
 }
 
 init();
@@ -67,7 +79,7 @@ function create_account() {
     '$phone':      '123-456-7890'
   })
   .then(function(response) {
-    console.log('CREATE ACCOUNT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('CREATE ACCOUNT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('CREATE ACCOUNT ERROR: ', err, '\n');
@@ -84,7 +96,7 @@ function update_account() {
     '$phone':      '123-456-7890'
   })
   .then(function(response) {
-    console.log('UPDATE ACCOUNT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('UPDATE ACCOUNT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('UPDATE ACCOUNT ERROR: ', err, '\n');
@@ -128,7 +140,7 @@ function update_content() {
     }
   )
   .then(function(response) {
-    console.log('UPDATE CONTENT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('UPDATE CONTENT: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('UPDATE CONTENT ERROR: ', err, '\n');
@@ -144,7 +156,7 @@ function login() {
     '$login_status': siftscience.CONSTANTS.STATUS.SUCCESS
   })
   .then(function(response) {
-    console.log('LOGIN: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('LOGIN: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('LOGIN ERROR: ', err, '\n');
@@ -159,7 +171,7 @@ function create_order() {
       "$user_id"          : user_id,
       // Supported Fields
       "$session_id"       : session_id,
-      "$order_id"         : "ORDER-28168441",
+      "$order_id"         : order_id ,
       "$user_email"       : "bill@gmail.com",
       "$amount"           : 115940000, // $115.94
       "$currency_code"    : "USD",
@@ -245,13 +257,15 @@ function create_order() {
     }
   )
   .then(function(response) {
-    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('CREATE_ORDER ERROR: ', err, '\n');
     throw err;
   });
-}function create_custom_order() {
+}
+
+function create_custom_order() {
   return siftscience.event.create_custom_order(// Sample $create_order event
     {
       // Required Fields
@@ -263,25 +277,20 @@ function create_order() {
       "$amount"           : 115940000, // $115.94
       "$currency_code"    : "USD",
       "$payment_type"     : "$crypto_currency",
-      "$shipping_method"    : "$physical",
       // For marketplaces, use $seller_user_id to identify the seller
       "$seller_user_id"     : "slinkys_emporium",
+
     }
   )
   .then(function(response) {
-    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('CREATE_ORDER: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
   })
   .catch(function(err) {
     console.log('CREATE_ORDER ERROR: ', err, '\n');
     throw err;
   });
 }
-// {
-//
-//   '$session_id':   session_id,
-//   '$user_id':      user_id,
-//   '$login_status': siftscience.CONSTANTS.STATUS.SUCCESS
-// }
+
 function custom_event_1() {
   return siftscience.event.custom_event_1({
     '$session_id': session_id,
@@ -290,7 +299,7 @@ function custom_event_1() {
     'custom_2':    'custom 2'
   })
   .then(function(response) {
-    console.log('CUSTOM EVENT 1: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('CUSTOM EVENT 1: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
     return response;
   })
   .catch(function(err) {
@@ -306,7 +315,7 @@ function label() {
     '$is_bad':      true
   })
   .then(function(response) {
-    console.log('LABEL: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('LABEL: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
     return response;
   })
   .catch(function(err) {
@@ -318,13 +327,39 @@ function label() {
 function score() {
   return siftscience.score(user_id)
   .then(function(response) {
-    console.log('SCORE: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', response, '\n');
+    console.log('SCORE: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
     return response;
   })
   .catch(function(err) {
     console.log('SCORE ERROR: ', err, '\n');
     throw err;
   });
+}
+
+function user_decisions() {
+  return siftscience.user_decisions(user_id)
+    .then(function(response) {
+      console.log('USER DECISION: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
+      return response;
+    })
+    .catch(function(err) {
+      console.log('USER DECISION ERROR: ', err, '\n');
+      throw err;
+    });
+  
+}
+
+function order_decisions() {
+  return siftscience.order_decisions(order_id)
+    .then(function(response) {
+      console.log('ORDER DECISION: ', siftscience.CONSTANTS.RESPONSE_STATUS_MESSAGE[response.status], '\n\n', JSON.stringify(response, null, 2), '\n');
+      return response;
+    })
+    .catch(function(err) {
+      console.log('ORDER DECISION ERROR: ', err, '\n');
+      throw err;
+    });
+  
 }
 
 function fingerprint_get_devices() {
